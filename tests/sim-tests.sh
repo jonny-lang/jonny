@@ -1,0 +1,1 @@
+for FILE in *.jonny; do python ./../jonny.py sim $FILE; done
