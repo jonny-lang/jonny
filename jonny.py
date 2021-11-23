@@ -304,7 +304,8 @@ def compile_program(program, out_file):
                 out.write("    jz addr_%d\n" % op[1])
             else:
                 assert False, "E: Unreachable op in compilation"
-
+        
+        out.write("addr_%d:\n" % len(program))
         out.write("    mov rax, 60\n")
         out.write("    mov rdi, 0\n")
         out.write("    syscall\n")
