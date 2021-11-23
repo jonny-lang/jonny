@@ -15,8 +15,19 @@
 
  ## quickstart
 
+ ### simulation
+
+ simulating jonny files simply interprets the program
+
  ```console
- $ ./jonny.py sim ./tests/test.jonny
- $ ./jonny.py com ./tests/test.jonny
- $ ./output
+ $ ./jonny.py sim program.jonny
+ ```
+
+ ### compiling
+
+ compiling jonny files generates assemble code and compiles it with [nasm](https://www.nasm.us/)
+
+ ```console
+ $ ./jonny.py com program.jonny
+ $ ./program 
  ```
