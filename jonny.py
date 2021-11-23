@@ -142,7 +142,7 @@ def simulate_program(program):
             b = stack.pop()
 
             stack.append(int(a < b))
-            
+
             ip += 1
         else:
             assert False, f"E: Unreachable op '{op[0]}' in simulation"
