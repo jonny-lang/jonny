@@ -29,6 +29,8 @@ OP_END = iota()
 OP_ELSE = iota()
 OP_DUP = iota()
 OP_GT = iota()
+OP_WHILE = iota()
+OP_DO = iota()
 COUNT_OPS = iota()
 
 
@@ -72,12 +74,20 @@ def gt():
     return (OP_GT,)
 
 
+def while_():
+    return (OP_WHILE,)
+
+
+def do():
+    return (OP_DO,)
+
+
 def simulate_program(program):
     stack = []
     ip = 0
 
     while ip < len(program):
-        assert COUNT_OPS == 10, "E: Exhaustive handling of ops in simulation"
+        assert COUNT_OPS == 12, "E: Exhaustive handling of ops in simulation"
 
         op = program[ip]
 
@@ -124,7 +134,11 @@ def simulate_program(program):
             else:
                 ip += 1
         elif op[0] == OP_END:
-            ip += 1
+            assert (
+                len(op) >= 2
+            ), "E: END does not have a reference to the end of its block. Call crossreference_blocks() on the program before simulating to fix this."
+
+            ip = op[1]
         elif op[0] == OP_ELSE:
             assert (
                 len(op) >= 2
@@ -143,6 +157,19 @@ def simulate_program(program):
             stack.append(int(a < b))
 
             ip += 1
+        elif op[0] == OP_WHILE:
+            ip += 1
+        elif op[0] == OP_DO:
+            a = stack.pop()
+
+            if a == 0:
+                assert (
+                    len(op) >= 2
+                ), "E: END does not have a reference to the end of its block. Call crossreference_blocks() on the program before simulating to fix this."
+
+                ip = op[1]
+            else:
+                ip += 1
         else:
             assert False, f"E: Unreachable op '{op[0]}' in simulation"
 
@@ -190,7 +217,9 @@ def compile_program(program, out_file):
         for ip in range(len(program)):
             op = program[ip]
 
-            assert COUNT_OPS == 10, "E: Exhaustive handling of ops in compilation"
+            assert COUNT_OPS == 12, "E: Exhaustive handling of ops in compilation"
+
+            out.write("addr_%d:\n" % ip)
 
             if op[0] == OP_PUSH:
                 out.write("    ;; -- push %d --\n" % op[1])
@@ -227,11 +256,18 @@ def compile_program(program, out_file):
 
                 assert (
                     len(op) >= 2
-                ), "E: if does not have a reference to the end of its block. Call crossreference_blocks() on the program before simulating to fix this."
+                ), "E: IF does not have a reference to the end of its block. Call crossreference_blocks() on the program before simulating to fix this."
 
                 out.write("    jz addr_%d\n" % op[1])
             elif op[0] == OP_END:
-                out.write("addr_%d:\n" % ip)
+                assert (
+                    len(op) >= 2
+                ), "E: END does not have a reference to the end of its block. Call crossreference_blocks() on the program before simulating to fix this."
+
+                out.write("    ;; -- end --\n")
+
+                if ip + 1 != op[1]:
+                    out.write("    jmp addr_%d\n" % op[1])
             elif op[0] == OP_ELSE:
                 out.write("    ;; -- else --\n")
 
@@ -240,7 +276,6 @@ def compile_program(program, out_file):
                 ), "E: ELSE does not have a reference to the end of its block. Call crossreference_blocks() on the program before simulating to fix this."
 
                 out.write("    jmp addr_%d\n" % op[1])
-                out.write("addr_%d:\n" % (ip + 1))
             elif op[0] == OP_DUP:
                 out.write("    ;; -- dup -- \n")
                 out.write("    pop rax\n")
@@ -255,6 +290,18 @@ def compile_program(program, out_file):
                 out.write("    cmp rax, rbx\n")
                 out.write("    cmovg rcx, rdx\n")
                 out.write("    push rcx\n")
+            elif op[0] == OP_WHILE:
+                out.write("    ;; -- while --\n")
+            elif op[0] == OP_DO:
+                out.write("    ;; -- do --\n")
+                out.write("    pop rax\n")
+                out.write("    test rax, rax\n")
+
+                assert (
+                    len(op) >= 2
+                ), "E: END does not have a reference to the end of its block. Call crossreference_blocks() on the program before simulating to fix this."
+
+                out.write("    jz addr_%d\n" % op[1])
             else:
                 assert False, "E: Unreachable op in compilation"
 
@@ -266,7 +313,7 @@ def compile_program(program, out_file):
 def parse_token_as_op(token):
     (file_path, row, col, word) = token
 
-    assert COUNT_OPS == 10, "E: Exhaustive handling of ops in parsing"
+    assert COUNT_OPS == 12, "E: Exhaustive handling of ops in parsing"
 
     if word == "+":
         return plus()
@@ -284,6 +331,10 @@ def parse_token_as_op(token):
         return dup()
     elif word == ">":
         return gt()
+    elif word == "while":
+        return while_()
+    elif word == "do":
+        return do()
     else:
         try:
             return push(int(word))
@@ -299,7 +350,7 @@ def crossreference_blocks(program):
         op = program[ip]
 
         assert (
-            COUNT_OPS == 10
+            COUNT_OPS == 12
         ), "E: Exhaustive handling of ops in crossreferencing. No need to handle all ops in here. Only those that form blocks"
 
         if op[0] == OP_IF:
@@ -319,8 +370,21 @@ def crossreference_blocks(program):
 
             if program[block_ip][0] == OP_IF or program[block_ip][0] == OP_ELSE:
                 program[block_ip] = (program[block_ip][0], ip)
+                program[ip] = (OP_END, ip + 1)
+            elif program[block_ip][0] == OP_DO:
+                assert len(program[block_ip]) >= 2
+
+                program[ip] = (OP_END, program[block_ip][1])
+                program[block_ip] = (OP_DO, ip + 1)
             else:
-                assert False, "W: END can only close IF blocks at the moment."
+                assert False, "W: END can only close IF, ELSE or DO blocks at the moment."
+        elif op[0] == OP_WHILE:
+            stack.append(ip)
+        elif op[0] == OP_DO:
+            while_ip = stack.pop()
+            program[ip] = (OP_DO, while_ip)
+            
+            stack.append(ip)
 
     return program
 
