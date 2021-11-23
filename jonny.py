@@ -1,4 +1,3 @@
-from re import I
 import sys
 import subprocess
 import shlex
