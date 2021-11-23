@@ -20,4 +20,4 @@ jobs:
     - name: Run Tests
       run: |
         cd tests/
-        ./sim-tests.sh
+        sudo ./sim-tests.sh
