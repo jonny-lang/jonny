@@ -143,6 +143,8 @@ def simulate_program(program):
             assert (
                 len(op) >= 2
             ), "E: ELSE does not have a reference to the end of its block. Call crossreference_blocks() on the program before simulating to fix this."
+        
+            ip = op[1]
         elif op[0] == OP_DUP:
             a = stack.pop()
 
@@ -328,6 +330,8 @@ def parse_token_as_op(token):
         return if_()
     elif word == "end":
         return end()
+    elif word == "else":
+        return else_()
     elif word == "dup":
         return dup()
     elif word == ">":
