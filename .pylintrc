@@ -1,0 +1,40 @@
+[MASTER]
+
+extension-pkg-whitelist=
+ignore=
+ignore-patterns=
+jobs=0
+limit-inference-results=100
+load-plugins=
+persistent=yes
+suggestion-mode=yes
+unsafe-load-any-extension=no
+disable=invalid-name,
+        consider-using-sys-exit,
+        missing-function-docstring,
+        consider-using-enumerate,
+        redefined-outer-name,
+        line-too-long,
+        global-statement,
+        missing-module-docstring,
+        too-many-branches,
+        no-else-return,
+        too-many-return-statements,
+        too-many-statements
+
+[MESSAGES CONTROL]
+
+confidence=
+
+[BASIC]
+
+docstring-min-length=-1
+
+argument-naming-style=any
+attr-naming-style=any
+class-naming-style=PascalCase
+const-naming-style=UPPER_CASE
+function-naming-style=any
+method-naming-style=any
+module-naming-style=any
+variable-naming-style=any

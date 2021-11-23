@@ -143,7 +143,7 @@ def simulate_program(program):
             assert (
                 len(op) >= 2
             ), "E: ELSE does not have a reference to the end of its block. Call crossreference_blocks() on the program before simulating to fix this."
-        
+
             ip = op[1]
         elif op[0] == OP_DUP:
             a = stack.pop()
@@ -306,7 +306,7 @@ def compile_program(program, out_file):
                 out.write("    jz addr_%d\n" % op[1])
             else:
                 assert False, "E: Unreachable op in compilation"
-        
+
         out.write("addr_%d:\n" % len(program))
         out.write("    mov rax, 60\n")
         out.write("    mov rdi, 0\n")
@@ -382,13 +382,15 @@ def crossreference_blocks(program):
                 program[ip] = (OP_END, program[block_ip][1])
                 program[block_ip] = (OP_DO, ip + 1)
             else:
-                assert False, "W: END can only close IF, ELSE or DO blocks at the moment."
+                assert (
+                    False
+                ), "W: END can only close IF, ELSE or DO blocks at the moment."
         elif op[0] == OP_WHILE:
             stack.append(ip)
         elif op[0] == OP_DO:
             while_ip = stack.pop()
             program[ip] = (OP_DO, while_ip)
-            
+
             stack.append(ip)
 
     return program
