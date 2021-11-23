@@ -20,7 +20,10 @@ disable=invalid-name,
         too-many-branches,
         no-else-return,
         too-many-return-statements,
-        too-many-statements
+        too-many-statements,
+        inconsistent-return-statements,
+        consider-using-f-string,
+        unspecified-encoding
 
 [MESSAGES CONTROL]
 
